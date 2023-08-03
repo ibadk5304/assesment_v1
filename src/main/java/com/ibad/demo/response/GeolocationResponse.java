@@ -1,10 +1,10 @@
-package com.ibad.demo;
+package com.ibad.demo.response;
 
 public class GeolocationResponse {
     private String city;
     private String country;
     private String region;
-    
+
     public String getCity() {
         return city;
     }

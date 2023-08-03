@@ -1,4 +1,4 @@
-package com.ibad.demo;
+package com.ibad.demo.response;
 
 public class RegistrationResponse {
     private String yuid;
