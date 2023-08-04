@@ -1,8 +1,5 @@
 # assesment_v1
 # Running the Application 
-To run the application use the following command:
-mvn spring-boot: run
-
 The application will start on port 8080 by default
 
 # API Endpoints
