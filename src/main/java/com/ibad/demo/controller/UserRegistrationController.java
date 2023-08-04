@@ -2,7 +2,6 @@ package com.ibad.demo.controller;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,7 +16,6 @@ import com.ibad.demo.response.RegistrationResponse;
 import com.ibad.demo.validation.UserRegistrationRequest;
 
 import jakarta.validation.Valid;
-import reactor.core.publisher.Mono;
 @RestController
 @Validated
 public class UserRegistrationController {
@@ -31,7 +29,7 @@ public class UserRegistrationController {
         this.webClientBuilder = webClientBuilder;
     }
     @PostMapping("/register")
-    public Mono<ResponseEntity<?>> registerUser(@RequestBody @Valid UserRegistrationRequest request) {
+    public ResponseEntity<?> registerUser(@RequestBody @Valid UserRegistrationRequest request) {
         /*
          * Retrieved the location data of that specfic ipAddress
          * response converted into an object format using Mono and then used the flatMap to inspect that object properties
@@ -43,20 +41,20 @@ public class UserRegistrationController {
          */
         WebClient webClient = webClientBuilder.baseUrl(GEOLOCATION_API_URL).build();
          
-        Mono<GeolocationResponse> geolocationMono = webClient.get()
+        // this code return an instance of geolocation  
+        GeolocationResponse geolocation = webClient.get()
                                                     .uri(uriBuilder -> uriBuilder.build(request.getIpAddress()))
                                                     .retrieve()
-                                                    .bodyToMono(GeolocationResponse.class);
-        return geolocationMono.flatMap(geolocation -> {
-                    if (!"Canada".equalsIgnoreCase(geolocation.getCountry())) {
-                        return Mono.just(ResponseEntity.badRequest().body("User is not eligible to register. IP address is not located in Canada."));
-                    }
-                    String yuid = generateRandomYuid();
-                    String welcomeMessage = "Welcome, " + request.getUsername() + "! You are in " + geolocation.getCity() + ", " + geolocation.getCountry() + ".";
-                    RegistrationResponse response = new RegistrationResponse(yuid, welcomeMessage);
-                    return Mono.just(ResponseEntity.ok(response));
-                })
-                .onErrorResume(error -> Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error.getMessage())));
+                                                    .bodyToMono(GeolocationResponse.class)
+                                                    .block();
+         
+        if (!"Canada".equalsIgnoreCase(geolocation.getCountry())) {
+            return ResponseEntity.badRequest().body("User is not eligible to register. IP address is not located in Canada.");
+        }
+        String yuid = generateRandomYuid();
+        String welcomeMessage = "Welcome, " + request.getUsername() + "! You are in " + geolocation.getCity() + ", " + geolocation.getCountry() + ".";
+        RegistrationResponse response = new RegistrationResponse(yuid, welcomeMessage);
+        return ResponseEntity.ok(response);
         
     }
     @ExceptionHandler(MethodArgumentNotValidException.class) // the exception will handle and display message for any unvalid properties which implemented in UserRegistrationRequest
@@ -69,13 +67,19 @@ public class UserRegistrationController {
     }
 
     // the will generate a random in a string format and remove any hipen
-    private String generateRandomYuid() {
+    public String generateRandomYuid() {
         UUID uuid = UUID.randomUUID();
         String yuid = uuid.toString().replaceAll("-", "");
         return yuid;
     }
 
+
+    // Getter and setters
     public static String getGeolocationApiUrl() {
         return GEOLOCATION_API_URL;
+    }
+
+        public WebClient.Builder getWebClientBuilder() {
+        return webClientBuilder;
     }
 }
