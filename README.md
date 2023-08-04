@@ -7,8 +7,9 @@ The application will start on port 8080 by default
 
 # API Endpoints
 The application exposes the following endpoint:
-* POST / register
-Use postman to send the post request where need to add/modify:
+
+Use postman to send the post request:
+POST / register
 
 Header:{
  Content-Type: application/json
